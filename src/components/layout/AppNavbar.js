@@ -1,13 +1,39 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
+import { compose } from "redux";
+import { connect } from "react-redux";
+import { firebaseConnect } from "react-redux-firebase";
 
 class AppNavbar extends Component {
+  state = {
+    isAuthenticated: false
+  };
+
+  static getDerivedStateFromProps(props) {
+    const { auth } = props;
+    console.log(auth);
+    if (auth.uid) {
+      return { isAuthenticated: true };
+    } else {
+      return { isAuthenticated: false };
+    }
+  }
+
+  onLogoutClick = e => {
+    e.preventDefault();
+    const { firebase } = this.props;
+    firebase.logout();
+  };
+
   render() {
+    const { isAuthenticated } = this.state;
+    const { auth } = this.props;
+
     return (
       <nav className="navbar navbar-expand-md navbar-dark bg-primary mb-4">
         <div className="container">
           <Link className="navbar-brand" to="/">
-            Navbar
+            ClientPanel
           </Link>
           <button
             className="navbar-toggler"
@@ -23,12 +49,32 @@ class AppNavbar extends Component {
 
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             <ul className="navbar-nav mr-auto">
-              <li className="nav-item">
-                <Link to="/" className="nav-link">
-                  Dashboard
-                </Link>
-              </li>
+              {isAuthenticated ? (
+                <li className="nav-item">
+                  <Link to="/" className="nav-link">
+                    Dashboard
+                  </Link>
+                </li>
+              ) : null}
             </ul>
+            {isAuthenticated ? (
+              <ul className="navbar-nav ml-auto">
+                <li className="nav-item">
+                  <a href="#!" className="nav-link">
+                    {auth.email}
+                  </a>
+                </li>
+                <li className="nav-item">
+                  <a
+                    href="#!"
+                    className="nav-link"
+                    onClick={this.onLogoutClick}
+                  >
+                    Logout
+                  </a>
+                </li>
+              </ul>
+            ) : null}
           </div>
         </div>
       </nav>
@@ -36,4 +82,9 @@ class AppNavbar extends Component {
   }
 }
 
-export default AppNavbar;
+export default compose(
+  firebaseConnect(),
+  connect((props, state) => ({
+    auth: props.firebase.auth
+  }))
+)(AppNavbar);
